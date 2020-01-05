@@ -13,6 +13,8 @@
 #include "HBM.h"
 #include "SALP.h"
 
+#include "../gpgpu-sim/l2cache.h"
+
 static map<string, function<MemoryBase *(const Config&, int)>> name_to_func = {
     {"DDR3", &MemoryFactory<DDR3>::create}, 
     {"DDR4", &MemoryFactory<DDR4>::create},

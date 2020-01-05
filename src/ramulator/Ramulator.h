@@ -9,8 +9,7 @@
 #include "Config.h"
 
 #include "../gpgpu-sim/delayqueue.h"
-#include "../gpgpu_sim/mem_fetch.h"
-#include "../gpgpu_sim/l2cache.h"
+#include "../gpgpu-sim/mem_fetch.h"
 
 extern unsigned long long gpu_sim_cycle;
 extern unsigned long long gpu_tot_sim_cycle;

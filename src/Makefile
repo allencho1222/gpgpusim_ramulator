@@ -48,7 +48,7 @@ endif
 ifneq ($(DEBUG),1)
 	OPTFLAGS += -O3
 else
-	CXXFLAGS += 
+	CXXFLAGS += -O0
 endif
 
 OPTFLAGS += -g3 -fPIC
@@ -76,9 +76,8 @@ clean:
 	rm -f *.o core *~ *.a Makefile.makedepend Makefile.makedepend.bak
 
 $(OUTPUT_DIR)/%.$(OEXT): %.cc
-	$(CPP) $(OPTFLAGS) $(CXXFLAGS) -o $(OUTPUT_DIR)/$*.$(OEXT) -c $*.cc
+	$(CPP) $(OPTFLAGS) $(CXXFLAGS) -fPIC -lstdc++ -std=c++11 -g -Wall -o $(OUTPUT_DIR)/$*.$(OEXT) -c $*.cc
 
 option_parser.$(OEXT): option_parser.h
 
 include $(OUTPUT_DIR)/Makefile.makedepend
-
