@@ -392,6 +392,10 @@ private:
     unsigned int gpgpu_compute_capability_minor;
     unsigned long long liveness_message_freq; 
 
+    // ramulator options
+    char *gpgpu_ramulator_config;
+    unsigned gpgpu_ramulator_cache_line_size;
+
     friend class gpgpu_sim;
 };
 

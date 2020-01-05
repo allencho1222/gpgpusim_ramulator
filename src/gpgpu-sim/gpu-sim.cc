@@ -564,7 +564,7 @@ void gpgpu_sim_config::reg_options(option_parser_t opp)
                           &Trace::sampling_memory_partition, "The memory partition which is printed using MEMPART_DPRINTF. Default -1 (i.e. all)",
                           "-1");
 
-    // ramulator options
+    // sungjun: ramulator option list
     option_parser_register(opp, "-gpgpu_ramulator_config", OPT_CSTR, &gpgpu_ramulator_config, "Ramulator config file location.", "/home/adwwsd/gpgpu-sim_ramulator/ramulator_configs/DDR3-2133L-config.cfg");
     option_parser_register(opp, "-gpgpu_ramulator_cache_line_size", OPT_INT32, &gpgpu_ramulator_cache_line_size, "Ramulator cache line size.", "64");
 
@@ -723,11 +723,13 @@ void gpgpu_sim::stop_all_running_kernels(){
 
 void set_ptx_warp_size(const struct core_config * warp_size);
 
+// gpgpu_sim_config class have configuration list
 gpgpu_sim::gpgpu_sim( const gpgpu_sim_config &config ) 
     : gpgpu_t(config), m_config(config)
 { 
     m_shader_config = &m_config.m_shader_config;
     m_memory_config = &m_config.m_memory_config;
+
     set_ptx_warp_size(m_shader_config);
     ptx_file_line_stats_create_exposed_latency_tracker(m_config.num_shader());
 
@@ -755,7 +757,11 @@ gpgpu_sim::gpgpu_sim( const gpgpu_sim_config &config )
     m_memory_partition_unit = new memory_partition_unit*[m_memory_config->m_n_mem];
     m_memory_sub_partition = new memory_sub_partition*[m_memory_config->m_n_mem_sub_partition];
     for (unsigned i=0;i<m_memory_config->m_n_mem;i++) {
-        m_memory_partition_unit[i] = new memory_partition_unit(i, m_memory_config, m_memory_stats);
+        // sungjun: initialize memory parition with ramulator options
+        m_memory_partition_unit[i] = 
+          new memory_partition_unit(i, m_memory_config, m_memory_stats,
+                                    config.gpgpu_ramulator_config, 
+                                    config.gpgpu_ramulator_cache_line_size);
         for (unsigned p = 0; p < m_memory_config->m_n_sub_partition_per_memory_channel; p++) {
             unsigned submpid = i * m_memory_config->m_n_sub_partition_per_memory_channel + p; 
             m_memory_sub_partition[submpid] = m_memory_partition_unit[i]->get_sub_partition(p); 
