@@ -41,6 +41,7 @@ public:
     virtual void record_core(int coreid) = 0;
     virtual void set_high_writeq_watermark(const float watermark) = 0;
     virtual void set_low_writeq_watermark(const float watermark) = 0;
+    virtual bool full(bool is_write, unsigned long req_addr) = 0;
 };
 
 template <class T, template<typename> class Controller = Controller >
@@ -262,6 +263,15 @@ public:
             delete ctrl;
         delete spec;
     }
+    // ----- parco lab -----
+    bool full(bool is_write, long req_addr) {
+      unsigned long addr = req_addr;
+      clear_lower_bits(addr, tx_bits);
+      int index = slice_lower_bits(addr, addr_bits[0]);
+      Request::Type type = (is_write) ? Request::Type::WRITE : Request::Type::READ;
+      return ctrls[index]->full(type);
+    }
+
 
     double clk_ns()
     {

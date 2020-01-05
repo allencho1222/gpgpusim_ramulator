@@ -291,6 +291,11 @@ public:
         cmd_trace_files.clear();
     }
 
+    bool full(Request::Type type) {
+      Queue q = get_queue(type);
+      return (q.size() == q.max);
+    }
+
     void finish(long read_req, long dram_cycles) {
       read_latency_avg = read_latency_sum.value() / read_req;
       req_queue_length_avg = req_queue_length_sum.value() / dram_cycles;

@@ -374,7 +374,7 @@ class VectorBase: public Stat<Derived> {
   }
 
   Element &operator[](off_type index) {
-    assert(index >= 0 && index < size());
+    assert(index >= 0 && index <= size());
     return data[index];
   }
 
@@ -460,7 +460,7 @@ class Distribution: public Stat<Distribution> {
     else {
       size_type index =
           (size_type)std::floor((val - min_track) / bucket_size);
-      assert(index < size());
+      assert(index <= size());
       cvec[index] += number;
     }
 
