@@ -28,27 +28,32 @@ static map<string, function<MemoryBase *(const Config&, int)>> name_to_func = {
 };
 
 Ramulator::Ramulator(unsigned partition_id, 
-                     const Config& configs,
-                     //const struct memory_config* config,
+                     const struct memory_config* config,
                      class memory_stats_t *stats, 
-                     class memory_partition_unit *mp) {
+                     class memory_partition_unit *mp,
+                     std::string ramulator_config, // config file path
+                     unsigned ramulator_cache_line_size) 
+  : ramulator_configs(ramulator_config),
+    read_cb_func(std::bind(&Ramulator::readComplete, this, std::placeholders::_1)),
+    write_cb_func(std::bind(&Ramulator::writeComplete, this, std::placeholders::_1)),
+    m_id(partition_id), m_memory_partition_unit(mp) {
+  // ramulator init
   const string& std_name = configs["standard"];
   assert(name_to_func.find(std_name) != name_to_func.end() &&
          "unrecognized standard name");
-  memory_model = name_to_func[std_name](configs, cacheline);
-  tCK = memory_model->clk_ns();
+  memory = name_to_func[std_name](ramulator_configs, ramulator_cache_line_size);
+  tCK = memory->clk_ns();
 
   m_id = partition_id;
-  m_config = config;
-  m_stats = stats;
   m_memory_partition_unit = mp;
 
+  // init fifo pipelines
   returnq = 
     new fifo_pipeline<mem_fetch>("ramulatorreturnq", 0, 
                                  config->gpgpu_dram_return_queue_size == 0 ?
                                  1024 : config->gpgpu_dram_return_queue_size);
   finishedq =
-    new fifo_pipeline<mem_fetch>("finishedq", m_config->CL, m_config->CL + 1);
+    new fifo_pipeline<mem_fetch>("finishedq", config->CL, config->CL + 1);
 }
 
 bool Ramulator::full(bool is_write, long req_addr) {

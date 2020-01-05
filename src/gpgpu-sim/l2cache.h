@@ -29,6 +29,8 @@
 #define MC_PARTITION_INCLUDED
 
 #include "dram.h"
+// sungjun: to declare Ramulator class
+#include "../ramulator/Ramulator.h"
 #include "../abstract_hardware_model.h"
 
 #include <list>
@@ -58,7 +60,12 @@ private:
 class memory_partition_unit
 {
 public: 
-   memory_partition_unit( unsigned partition_id, const struct memory_config *config, class memory_stats_t *stats );
+   // sungjun: memory partition unit receives ramulator option list
+   memory_partition_unit(unsigned partition_id, 
+                         const struct memory_config *config, 
+                         class memory_stats_t *stats,
+                         std::string ramulator_config,
+                         unsigned ramulator_cache_line_size);
    ~memory_partition_unit(); 
 
    bool busy() const;
@@ -94,12 +101,14 @@ public:
    unsigned get_mpid() const { return m_id; }
 
 private: 
-
    unsigned m_id;
    const struct memory_config *m_config;
    class memory_stats_t *m_stats;
    class memory_sub_partition **m_sub_partition; 
    class dram_t *m_dram;
+
+   // sungjun: ramulator interface
+   Ramulator* m_dram_r;
 
    class arbitration_metadata
    {

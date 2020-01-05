@@ -1,7 +1,16 @@
-#include "../gpgpu-sim/delayqueue.h"
-
 #ifndef RAMULATOR_H_
 #define RAMULATOR_H_
+
+#include <string>
+#include <deque>
+#include <map>
+#include <functional>
+
+#include "Config.h"
+
+#include "../gpgpu-sim/delayqueue.h"
+#include "../gpgpu_sim/mem_fetch.h"
+#include "../gpgpu_sim/l2cache.h"
 
 extern unsigned long long gpu_sim_cycle;
 extern unsigned long long gpu_tot_sim_cycle;
@@ -12,7 +21,8 @@ class MemoryBase;
 class Ramulator {
 public:
   Ramulator(unsigned partition_id, const struct memory_config* config,
-            class memory_stats_t *stats, class memory_partition_unit *mp);
+            class memory_stats_t *stats, class memory_partition_unit *mp,
+            std::string ramulator_config, unsigned ramulator_cache_line_size);
   ~Ramulator();
 
   // check whether the read or write queue is available
@@ -31,21 +41,29 @@ public:
   // related memory partition
 
 private:
-  MemoryBase* memory_model;
+  MemoryBase* memory;
 
   fifo_pipeline<mem_fetch> *finishedq;
   fifo_pipeline<mem_fetch> *returnq;
 
-  map<unsigned long long, deque<mem_fetch*>> reads;
-  map<unsigned long long, deque<mem_fetch*>> writes;
+  std::map<unsigned long long, std::deque<mem_fetch*>> reads;
+  std::map<unsigned long long, std::deque<mem_fetch*>> writes;
 
   unsigned m_id;
   memory_partition_unit *m_memory_partition_unit;
 
+  // callback functions
   std::function<void(Request&)> read_cb_func;
   std::function<void(Request&)> write_cb_func;
   void readComplete(Request& req);
   void writeComplete(Request& req);
+
+  // Config - 
+  // it parses options from ramulator_config file when it is constructed
+  ramulator::Config ramulator_configs;
+
+
+
 };
 
 #endif
