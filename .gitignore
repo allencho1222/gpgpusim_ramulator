@@ -33,6 +33,7 @@ cuobjdump_to_ptxplus/sass_parser.output
 
 workspace/_app_cuda_version_*
 workspace/_cuobjdump_list_ptx_*
+workspace/gpgpusim.config
 
 build/*
 tags
