@@ -67,9 +67,10 @@ Ramulator::Ramulator(unsigned partition_id,
                                  1024 : config->gpgpu_dram_return_queue_size);
   finishedq =
     new fifo_pipeline<mem_fetch>("finishedq", config->CL, config->CL + 1);
+  // checked constructor successfully constructed
 }
 
-bool Ramulator::full(bool is_write, long req_addr) {
+bool Ramulator::full(bool is_write, unsigned long req_addr) {
   return memory->full(is_write, req_addr);
 }
 

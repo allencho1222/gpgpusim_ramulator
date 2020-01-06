@@ -36,7 +36,7 @@ public:
             unsigned ramulator_cache_line_size);
   ~Ramulator();
   // check whether the read or write queue is available
-  bool full(bool is_write, long req_addr);
+  bool full(bool is_write, unsigned long req_addr);
   void cycle();
 
   void finish(void);
