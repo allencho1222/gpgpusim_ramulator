@@ -64,7 +64,8 @@ Ramulator::Ramulator(unsigned partition_id,
   returnq = 
     new fifo_pipeline<mem_fetch>("ramulatorreturnq", 0, 
                                  config->gpgpu_dram_return_queue_size == 0 ?
-                                 1024 : config->gpgpu_dram_return_queue_size);
+                                 //1024 : config->gpgpu_dram_return_queue_size);
+                                 1024 : 2048);
   finishedq =
     new fifo_pipeline<mem_fetch>("finishedq", config->CL, config->CL + 1);
   // checked constructor successfully constructed
@@ -75,19 +76,19 @@ bool Ramulator::full(bool is_write, unsigned long req_addr) {
 }
 
 void Ramulator::cycle() {
-  if (!returnq_full()) {
-    mem_fetch* finished_mf = finishedq->pop();
-    if (finished_mf) {
-      finished_mf->set_status(IN_PARTITION_MC_RETURNQ, gpu_sim_cycle + gpu_tot_sim_cycle);
-      if (finished_mf->get_access_type() != L1_WRBK_ACC && finished_mf->get_access_type() != L2_WRBK_ACC) {
-        finished_mf->set_reply();
-        returnq->push(finished_mf);
-      } else {
-        m_memory_partition_unit->set_done(finished_mf);
-        delete finished_mf;
-      }
-    }
-  }
+  //if (!returnq_full()) {
+    //mem_fetch* finished_mf = finishedq->pop();
+    //if (finished_mf) {
+      //finished_mf->set_status(IN_PARTITION_MC_RETURNQ, gpu_sim_cycle + gpu_tot_sim_cycle);
+      //if (finished_mf->get_access_type() != L1_WRBK_ACC && finished_mf->get_access_type() != L2_WRBK_ACC) {
+        //finished_mf->set_reply();
+        //returnq->push(finished_mf);
+      //} else {
+        //m_memory_partition_unit->set_done(finished_mf);
+        //delete finished_mf;
+      //}
+    //}
+  //}
   
   // cycle ramulator
   memory->tick();
@@ -99,7 +100,6 @@ bool Ramulator::send(Request req) {
 }
 
 void Ramulator::push(class mem_fetch* mf) {
-  std::cout << "push" <<std::endl;
   bool accepted = false;
 
   if (mf->get_type() == READ_REQUEST) {
@@ -138,7 +138,7 @@ void Ramulator::push(class mem_fetch* mf) {
 }
 
 bool Ramulator::returnq_full() const {
-  returnq->full();
+  return returnq->full();
 }
 mem_fetch* Ramulator::return_queue_top() const {
   return returnq->top();
@@ -155,6 +155,8 @@ void Ramulator::readComplete(Request& req) {
   if (!read_mf_list.size())
     reads.erase(req.mf->get_addr());
 
+  mf->set_status(IN_PARTITION_MC_RETURNQ, gpu_sim_cycle + gpu_tot_sim_cycle);
+
   finishedq->push(mf);
 }
 void Ramulator::writeComplete(Request& req) {
@@ -166,7 +168,17 @@ void Ramulator::writeComplete(Request& req) {
   if (!write_mf_list.size())
     writes.erase(req.mf->get_addr());
 
-  finishedq->push(mf);
+  mf->set_status(IN_PARTITION_MC_RETURNQ, gpu_sim_cycle + gpu_tot_sim_cycle);
+  if (mf->get_access_type() != L1_WRBK_ACC && mf->get_access_type() != L2_WRBK_ACC) {
+    mf->set_reply();
+    returnq->push(mf);
+  } else {
+    m_memory_partition_unit->set_done(finished_mf);
+    delete finished_mf;
+  }
+
+
+  //finishedq->push(mf);
 }
 
 void Ramulator::finish(void) {
