@@ -143,8 +143,7 @@ void memory_partition_unit::arbitration_metadata::borrow_credit(int inner_sub_pa
     int spid = inner_sub_partition_id; 
     if (m_private_credit[spid] < m_private_credit_limit) {
         m_private_credit[spid] += 1; 
-    } else if (m_shared_credit_limit == 0 || m_shared_credit < m_shared_credit_limit) {
-        m_shared_credit += 1; 
+    } else if (m_shared_credit_limit == 0 || m_shared_credit < m_shared_credit_limit) { m_shared_credit += 1; 
     } else {
         assert(0 && "DRAM arbitration error: Borrowing from depleted credit!"); 
     }
@@ -220,7 +219,8 @@ void memory_partition_unit::dram_cycle()
 { 
     // pop completed memory request from dram and push it to dram-to-L2 queue 
     // of the original sub partition 
-    mem_fetch* mf_return = m_dram->return_queue_top();
+    //mem_fetch* mf_return = m_dram->return_queue_top();
+    mem_fetch* mf_return = m_dram_r->return_queue_top();
     if (mf_return) {
         unsigned dest_global_spid = mf_return->get_sub_partition_id(); 
         int dest_spid = global_sub_partition_id_to_local_id(dest_global_spid); 
@@ -235,14 +235,17 @@ void memory_partition_unit::dram_cycle()
                 m_arbitration_metadata.return_credit(dest_spid); 
                 MEMPART_DPRINTF("mem_fetch request %p return from dram to sub partition %d\n", mf_return, dest_spid); 
             }
-            m_dram->return_queue_pop(); 
+            //m_dram->return_queue_pop(); 
+            m_dram_r->return_queue_pop(); 
         }
     } else {
-        m_dram->return_queue_pop(); 
+        //m_dram->return_queue_pop(); 
+        m_dram_r->return_queue_pop(); 
     }
     
-    m_dram->cycle(); 
-    m_dram->dram_log(SAMPLELOG);   
+    //m_dram->cycle(); 
+    m_dram_r->cycle(); 
+    //m_dram->dram_log(SAMPLELOG);   
 
    // mem_fetch *mf = m_sub_partition[spid]->L2_dram_queue_top();
     //if( !m_dram->full(mf->is_write()) ) {
@@ -253,7 +256,8 @@ void memory_partition_unit::dram_cycle()
             int spid = (p + last_issued_partition + 1) % m_config->m_n_sub_partition_per_memory_channel; 
             if (!m_sub_partition[spid]->L2_dram_queue_empty() && can_issue_to_dram(spid)) {
                 mem_fetch *mf = m_sub_partition[spid]->L2_dram_queue_top();
-                if(m_dram->full(mf->is_write()) )
+                //if(m_dram->full(mf->is_write()) )
+                if(m_dram_r->full(mf->is_write(), mf->get_addr()) )
                 	break;
 
                 m_sub_partition[spid]->L2_dram_queue_pop();
@@ -271,10 +275,15 @@ void memory_partition_unit::dram_cycle()
 
     // DRAM latency queue
 
-    if( !m_dram_latency_queue.empty() && ( (gpu_sim_cycle+gpu_tot_sim_cycle) >= m_dram_latency_queue.front().ready_cycle ) && !m_dram->full(m_dram_latency_queue.front().req->is_write()) ) {
+    if( !m_dram_latency_queue.empty() && 
+        ( (gpu_sim_cycle+gpu_tot_sim_cycle) >= m_dram_latency_queue.front().ready_cycle ) ) {
     	mem_fetch* mf = m_dram_latency_queue.front().req;
-    	m_dram_latency_queue.pop_front();
-        m_dram->push(mf);
+      if (mf) {
+        if (m_dram_r->full(mf->is_write(), mf->get_addr())) {
+          m_dram_latency_queue.pop_front();
+          m_dram->push(mf);
+        }
+      }
     }
 }
 

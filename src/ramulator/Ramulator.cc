@@ -98,6 +98,7 @@ bool Ramulator::send(Request req) {
 }
 
 void Ramulator::push(class mem_fetch* mf) {
+  std::cout << "push" <<std::endl;
   bool accepted = false;
 
   if (mf->get_type() == READ_REQUEST) {
@@ -156,6 +157,7 @@ void Ramulator::readComplete(Request& req) {
   finishedq->push(mf);
 }
 void Ramulator::writeComplete(Request& req) {
+  std::cout << "hi" << std::endl;
   auto& write_mf_list = writes.find(req.mf->get_addr())->second;
   mem_fetch* mf = write_mf_list.front();
   write_mf_list.pop_front();
