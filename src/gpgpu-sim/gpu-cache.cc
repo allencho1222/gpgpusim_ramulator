@@ -1523,7 +1523,6 @@ data_cache::rd_miss_base( new_addr_type addr,
     bool do_miss = false;
     bool wb = false;
     evicted_block_info evicted;
-    std::cout << "send read req" << std::endl;
     send_read_request( addr,
                        block_addr,
                        cache_index,
@@ -1535,7 +1534,6 @@ data_cache::rd_miss_base( new_addr_type addr,
         if(wb && (m_config.m_write_policy != WRITE_THROUGH) ){ 
             mem_fetch *wb = m_memfetch_creator->alloc(evicted.m_block_addr,
                 m_wrbk_type,evicted.m_modified_size,true);
-            std::cout << "write back request is sent" << std::endl;
         send_write_request(wb, WRITE_BACK_REQUEST_SENT, time, events);
       }
         return MISS;

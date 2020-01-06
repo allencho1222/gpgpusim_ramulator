@@ -1,6 +1,7 @@
 #ifndef __STATTYPE_H
 #define __STATTYPE_H
 
+#include <iostream>
 #include <limits>
 #include <fstream>
 #include <string>
