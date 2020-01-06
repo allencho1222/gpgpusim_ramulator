@@ -277,7 +277,6 @@ void memory_partition_unit::dram_cycle()
 
     if( !m_dram_latency_queue.empty() && 
         ( (gpu_sim_cycle+gpu_tot_sim_cycle) >= m_dram_latency_queue.front().ready_cycle ) ) {
-      std::cout << "before push" << std::endl;
     	mem_fetch* mf = m_dram_latency_queue.front().req;
       if (mf) {
         if (m_dram_r->full(mf->is_write(), (unsigned long)mf->get_addr())) {
