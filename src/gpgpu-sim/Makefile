@@ -50,7 +50,7 @@ endif
 ifneq ($(DEBUG),1)
 	OPTFLAGS += -O3
 else
-	CXXFLAGS += 
+	CXXFLAGS += -O0 
 endif
 
 POWER_FLAGS=
