@@ -21,7 +21,7 @@
 #include "HBM.h"
 #include "SALP.h"
 
-//#include "../gpgpu-sim/l2cache.h"
+#include "../gpgpu-sim/l2cache.h"
 
 using namespace ramulator;
 

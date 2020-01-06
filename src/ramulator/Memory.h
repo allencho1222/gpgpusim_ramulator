@@ -264,10 +264,9 @@ public:
         delete spec;
     }
     // ----- parco lab -----
-    bool full(bool is_write, long req_addr) {
-      unsigned long addr = req_addr;
-      clear_lower_bits(addr, tx_bits);
-      int index = slice_lower_bits(addr, addr_bits[0]);
+    bool full(bool is_write, unsigned long req_addr) {
+      clear_lower_bits(req_addr, tx_bits);
+      int index = slice_lower_bits(req_addr, addr_bits[0]);
       Request::Type type = (is_write) ? Request::Type::R_WRITE : Request::Type::R_READ;
       return ctrls[index]->full(type);
     }
@@ -316,7 +315,7 @@ public:
     bool send(Request req)
     {
         req.addr_vec.resize(addr_bits.size());
-        long addr = req.addr;
+        unsigned long addr = req.addr;
         int coreid = req.coreid;
 
         // Each transaction size is 2^tx_bits, so first clear the lowest tx_bits bits
@@ -591,17 +590,17 @@ private:
             n ++;
         return n;
     }
-    int slice_lower_bits(long& addr, int bits)
+    int slice_lower_bits(unsigned long& addr, int bits)
     {
         int lbits = addr & ((1<<bits) - 1);
         addr >>= bits;
         return lbits;
     }
-    bool get_bit_at(long addr, int bit)
+    bool get_bit_at(unsigned long addr, int bit)
     {
         return (((addr >> bit) & 1) == 1);
     }
-    void clear_lower_bits(long& addr, int bits)
+    void clear_lower_bits(unsigned long& addr, int bits)
     {
         addr >>= bits;
     }

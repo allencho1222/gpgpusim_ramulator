@@ -16,14 +16,15 @@
 #include "../gpgpu-sim/delayqueue.h"
 //#include "../gpgpu-sim/mem_fetch.h"
 //#include "../gpgpu-sim/l2cache.h"
-//#include "../gpgpu-sim/gpu-sim.h"
+#include "../gpgpu-sim/gpu-sim.h"
 
 extern unsigned long long gpu_sim_cycle;
 extern unsigned long long gpu_tot_sim_cycle;
 
+namespace ramulator{
 class Request;
 class MemoryBase;
-
+}
 
 //using namespace ramulator;
 
@@ -50,7 +51,7 @@ public:
   double tCK;
 
 private:
-  MemoryBase* memory;
+  ramulator::MemoryBase* memory;
 
   fifo_pipeline<mem_fetch> *finishedq;
   fifo_pipeline<mem_fetch> *returnq;
@@ -63,17 +64,17 @@ private:
   memory_partition_unit *m_memory_partition_unit;
 
   // callback functions
-  std::function<void(Request&)> read_cb_func;
-  std::function<void(Request&)> write_cb_func;
-  void readComplete(Request& req);
-  void writeComplete(Request& req);
+  std::function<void(ramulator::Request&)> read_cb_func;
+  std::function<void(ramulator::Request&)> write_cb_func;
+  void readComplete(ramulator::Request& req);
+  void writeComplete(ramulator::Request& req);
 
   // Config - 
   // it parses options from ramulator_config file when it is constructed
   ramulator::Config ramulator_configs;
 
 
-  bool send(Request req);
+  bool send(ramulator::Request req);
 };
 
 
