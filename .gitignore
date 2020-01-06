@@ -60,3 +60,7 @@ debug_tools/WatchYourStep/ptxjitplus/gpgpu*
 debug_tools/WatchYourStep/ptxjitplus/*.old
 debug_tools/WatchYourStep/ptxjitplus/ptxjitplus
 debug_tools/WatchYourStep/ptxjitplus/*.ptx
+
+#rodinia
+rodinia/data/*
+rodinia/*.exe
