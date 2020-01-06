@@ -268,7 +268,7 @@ public:
       unsigned long addr = req_addr;
       clear_lower_bits(addr, tx_bits);
       int index = slice_lower_bits(addr, addr_bits[0]);
-      Request::Type type = (is_write) ? Request::Type::WRITE : Request::Type::READ;
+      Request::Type type = (is_write) ? Request::Type::R_WRITE : Request::Type::R_READ;
       return ctrls[index]->full(type);
     }
 
@@ -345,11 +345,11 @@ public:
         if(ctrls[req.addr_vec[0]]->enqueue(req)) {
             // tally stats here to avoid double counting for requests that aren't enqueued
             ++num_incoming_requests;
-            if (req.type == Request::Type::READ) {
+            if (req.type == Request::Type::R_READ) {
               ++num_read_requests[coreid];
               ++incoming_read_reqs_per_channel[req.addr_vec[int(T::Level::Channel)]];
             }
-            if (req.type == Request::Type::WRITE) {
+            if (req.type == Request::Type::R_WRITE) {
               ++num_write_requests[coreid];
             }
             ++incoming_requests_per_channel[req.addr_vec[int(T::Level::Channel)]];

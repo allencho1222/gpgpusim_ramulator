@@ -1,7 +1,15 @@
 #include "Ramulator.h"
 
-#include "Memory.h"
 #include "MemoryFactory.h"
+#include "Memory.h"
+//#include "MemoryFactory.h"
+//#include "Memory.h"
+
+//#include "Config.h"
+//#include "Request.h"
+
+//#include "MemoryFactory.h"
+//#include "Memory.h"
 
 #include "DDR3.h"
 #include "DDR4.h"
@@ -13,7 +21,9 @@
 #include "HBM.h"
 #include "SALP.h"
 
-#include "../gpgpu-sim/l2cache.h"
+//#include "../gpgpu-sim/l2cache.h"
+
+using namespace ramulator;
 
 static map<string, function<MemoryBase *(const Config&, int)>> name_to_func = {
     {"DDR3", &MemoryFactory<DDR3>::create}, 
@@ -22,25 +32,26 @@ static map<string, function<MemoryBase *(const Config&, int)>> name_to_func = {
     {"LPDDR4", &MemoryFactory<LPDDR4>::create},
     {"GDDR5", &MemoryFactory<GDDR5>::create}, 
     {"WideIO", &MemoryFactory<WideIO>::create}, 
-    {"WideIO2", &MemoryFactory<WideIO2>::create},
-    {"HBM", &MemoryFactory<HBM>::create},
+    {"WideIO2", &MemoryFactory<WideIO2>::create}, {"HBM", &MemoryFactory<HBM>::create},
     {"SALP-1", &MemoryFactory<SALP>::create}, 
     {"SALP-2", &MemoryFactory<SALP>::create}, 
     {"SALP-MASA", &MemoryFactory<SALP>::create}
 };
+
 
 Ramulator::Ramulator(unsigned partition_id, 
                      const struct memory_config* config,
                      class memory_stats_t *stats, 
                      class memory_partition_unit *mp,
                      std::string ramulator_config, // config file path
+                     unsigned num_cores,
                      unsigned ramulator_cache_line_size) 
   : ramulator_configs(ramulator_config),
     read_cb_func(std::bind(&Ramulator::readComplete, this, std::placeholders::_1)),
     write_cb_func(std::bind(&Ramulator::writeComplete, this, std::placeholders::_1)),
-    m_id(partition_id), m_memory_partition_unit(mp) {
+    m_id(partition_id), num_cores(num_cores), m_memory_partition_unit(mp) {
   // ramulator init
-  const string& std_name = configs["standard"];
+  const string& std_name = ramulator_configs["standard"];
   assert(name_to_func.find(std_name) != name_to_func.end() &&
          "unrecognized standard name");
   memory = name_to_func[std_name](ramulator_configs, ramulator_cache_line_size);
@@ -59,15 +70,15 @@ Ramulator::Ramulator(unsigned partition_id,
 }
 
 bool Ramulator::full(bool is_write, long req_addr) {
-  return memory_model->full(is_write, req_addr);
+  return memory->full(is_write, req_addr);
 }
 
 void Ramulator::cycle() {
   if (!returnq_full()) {
-    mem_fethc* finished_mf = finishedq->pop();
+    mem_fetch* finished_mf = finishedq->pop();
     if (finished_mf) {
       finished_mf->set_status(IN_PARTITION_MC_RETURNQ, gpu_sim_cycle + gpu_tot_sim_cycle);
-      if (finished_mf->get_access_type != L1_WRBK_ACC && finished_mf->get_access_type() != L2_WRBK_ACC) {
+      if (finished_mf->get_access_type() != L1_WRBK_ACC && finished_mf->get_access_type() != L2_WRBK_ACC) {
         finished_mf->set_reply();
         returnq->push(finished_mf);
       } else {
@@ -78,37 +89,39 @@ void Ramulator::cycle() {
   }
   
   // cycle ramulator
-  memory_model->tick();
+  memory->tick();
 }
 
 
 bool Ramulator::send(Request req) {
-  return memory_model->send(req);
+  return memory->send(req);
 }
 
 void Ramulator::push(class mem_fetch* mf) {
   bool accepted = false;
 
   if (mf->get_type() == READ_REQUEST) {
-    assert (is_write() == false);
-    assert (mf->get_sid() < (unsigned) m_num_cores);
+    assert (mf->is_write() == false);
+    assert (mf->get_sid() < (unsigned) num_cores);
 
-    Request req(mf->get_addr(), Request::Type::READ, 
-                read_callback, mf->get_sid());
+    Request req(mf->get_addr(), Request::Type::R_READ, 
+                read_cb_func, mf->get_sid());
+    req.mf = mf;
     accepted = send(req);
   } else if (mf->get_type() == WRITE_REQUEST) {
     // WRITE_BACK
-    if (mf->get_sid() > (unsigned) m_num_cores) {
-      Request req(mf->get_addr(), Request::Type::WRITE,
-                  write_callback, m_num_cores);
-      accpeted = send(req);
+    if (mf->get_sid() > (unsigned) num_cores) {
+      Request req(mf->get_addr(), Request::Type::R_WRITE,
+                  write_cb_func, num_cores);
+      req.mf = mf;
+      accepted = send(req);
     } else {
-      Request req(mf->get_addr(), Request::Type::WRITE,
-                  write_callback, mf->get_sid());
-      accpeted = send(req);
+      Request req(mf->get_addr(), Request::Type::R_WRITE,
+                  write_cb_func, mf->get_sid());
+      req.mf = mf;
+      accepted = send(req);
     }
   }
-  req.mf = mf;
 
   // Since push occurs only if the dram is not full (checked in dram_cycle()),
   // accepted has to true
@@ -132,7 +145,7 @@ mem_fetch* Ramulator::return_queue_pop() const {
   return returnq->pop();
 }
 
-void Ramulator::readComplete(Request & req) {
+void Ramulator::readComplete(Request& req) {
   auto& read_mf_list = reads.find(req.mf->get_addr())->second;
   mem_fetch* mf = read_mf_list.front();
   read_mf_list.pop_front();
@@ -142,7 +155,7 @@ void Ramulator::readComplete(Request & req) {
 
   finishedq->push(mf);
 }
-void Ramulator::writeComplete(Request & req) {
+void Ramulator::writeComplete(Request& req) {
   auto& write_mf_list = writes.find(req.mf->get_addr())->second;
   mem_fetch* mf = write_mf_list.front();
   write_mf_list.pop_front();
@@ -155,6 +168,5 @@ void Ramulator::writeComplete(Request & req) {
 
 void Ramulator::finish(void) {
   Stats_ramulator::statlist.printall();
-  memory_model->finish();
+  memory->finish();
 }
-

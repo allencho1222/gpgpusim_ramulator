@@ -237,7 +237,7 @@ void Core::tick()
         }
     }
 
-    if (req_type == Request::Type::READ) {
+    if (req_type == Request::Type::R_READ) {
         // read request
         if (inserted == window.ipc) return;
         if (window.is_full()) return;
@@ -250,7 +250,7 @@ void Core::tick()
     }
     else {
         // write request
-        assert(req_type == Request::Type::WRITE);
+        assert(req_type == Request::Type::R_WRITE);
         Request req(req_addr, req_type, callback, id);
         if (!send(req)) return;
         cpu_inst++;
@@ -400,9 +400,9 @@ bool Trace::get_unfiltered_request(long& bubble_cnt, long& req_addr, Request::Ty
     pos = line.find_first_not_of(' ', pos+end);
 
     if (pos == string::npos || line.substr(pos)[0] == 'R')
-        req_type = Request::Type::READ;
+        req_type = Request::Type::R_READ;
     else if (line.substr(pos)[0] == 'W')
-        req_type = Request::Type::WRITE;
+        req_type = Request::Type::R_WRITE;
     else assert(false);
     return true;
 }
@@ -415,7 +415,7 @@ bool Trace::get_filtered_request(long& bubble_cnt, long& req_addr, Request::Type
     if (has_write){
         bubble_cnt = 0;
         req_addr = write_addr;
-        req_type = Request::Type::WRITE;
+        req_type = Request::Type::R_WRITE;
         has_write = false;
         return true;
     }
@@ -442,7 +442,7 @@ bool Trace::get_filtered_request(long& bubble_cnt, long& req_addr, Request::Type
 
     pos = line.find_first_not_of(' ', pos+1);
     req_addr = stoul(line.substr(pos), &end, 0);
-    req_type = Request::Type::READ;
+    req_type = Request::Type::R_READ;
 
     pos = line.find_first_not_of(' ', pos+end);
     if (pos != string::npos){
@@ -465,9 +465,9 @@ bool Trace::get_dramtrace_request(long& req_addr, Request::Type& req_type)
     pos = line.find_first_not_of(' ', pos+1);
 
     if (pos == string::npos || line.substr(pos)[0] == 'R')
-        req_type = Request::Type::READ;
+        req_type = Request::Type::R_READ;
     else if (line.substr(pos)[0] == 'W')
-        req_type = Request::Type::WRITE;
+        req_type = Request::Type::R_WRITE;
     else assert(false);
     return true;
 }

@@ -30,13 +30,14 @@
 
 #include "dram.h"
 // sungjun: to declare Ramulator class
-#include "../ramulator/Ramulator.h"
 #include "../abstract_hardware_model.h"
+//#include "../ramulator/Ramulator.h"
 
 #include <list>
 #include <queue>
 
 class mem_fetch;
+class Ramulator;
 
 class partition_mf_allocator : public mem_fetch_allocator {
 public:
@@ -65,6 +66,7 @@ public:
                          const struct memory_config *config, 
                          class memory_stats_t *stats,
                          std::string ramulator_config,
+                         unsigned num_cores,
                          unsigned ramulator_cache_line_size);
    ~memory_partition_unit(); 
 

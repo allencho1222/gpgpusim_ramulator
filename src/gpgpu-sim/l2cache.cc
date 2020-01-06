@@ -47,6 +47,7 @@
 
 // sungjun: to use ramulator functions
 #include "../ramulator/Ramulator.h"
+//#include "../ramulator/Config.h"
 
 
 mem_fetch * partition_mf_allocator::alloc(new_addr_type addr, mem_access_type type, unsigned size, bool wr ) const 
@@ -68,6 +69,7 @@ memory_partition_unit::memory_partition_unit( unsigned partition_id,
                                               const struct memory_config *config,
                                               class memory_stats_t *stats,
                                               std::string ramulator_config,
+                                              unsigned num_cores,
                                               unsigned ramulator_cache_line_size)
 : m_id(partition_id), m_config(config), m_stats(stats), m_arbitration_metadata(config) 
 {
@@ -75,7 +77,8 @@ memory_partition_unit::memory_partition_unit( unsigned partition_id,
 
     // sungjun: construct ramulator interface
     m_dram_r = new Ramulator(m_id, m_config, m_stats, this,
-                             ramulator_config, ramulator_cache_line_size);
+                             ramulator_config, num_cores, 
+                             ramulator_cache_line_size);
 
     m_sub_partition = new memory_sub_partition*[m_config->m_n_sub_partition_per_memory_channel]; 
     for (unsigned p = 0; p < m_config->m_n_sub_partition_per_memory_channel; p++) {

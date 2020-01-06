@@ -106,10 +106,10 @@ bool Cache::send(Request req) {
       get_tag(req.addr));
 
   cache_total_access++;
-  if (req.type == Request::Type::WRITE) {
+  if (req.type == Request::Type::R_WRITE) {
     cache_write_access++;
   } else {
-    assert(req.type == Request::Type::READ);
+    assert(req.type == Request::Type::R_READ);
     cache_read_access++;
   }
   // If there isn't a set, create it.
@@ -118,7 +118,7 @@ bool Cache::send(Request req) {
 
   if (is_hit(lines, req.addr, &line)) {
     lines.push_back(Line(req.addr, get_tag(req.addr), false,
-        line->dirty || (req.type == Request::Type::WRITE)));
+        line->dirty || (req.type == Request::Type::R_WRITE)));
     lines.erase(line);
     cachesys->hit_list.push_back(
         make_pair(cachesys->clk + latency[int(level)], req));
@@ -132,23 +132,23 @@ bool Cache::send(Request req) {
   } else {
     debug("miss @level %d", int(level));
     cache_total_miss++;
-    if (req.type == Request::Type::WRITE) {
+    if (req.type == Request::Type::R_WRITE) {
       cache_write_miss++;
     } else {
-      assert(req.type == Request::Type::READ);
+      assert(req.type == Request::Type::R_READ);
       cache_read_miss++;
     }
 
     // The dirty bit will be set if this is a write request and @L1
-    bool dirty = (req.type == Request::Type::WRITE);
+    bool dirty = (req.type == Request::Type::R_WRITE);
 
     // Modify the type of the request to lower level
-    if (req.type == Request::Type::WRITE) {
-      req.type = Request::Type::READ;
+    if (req.type == Request::Type::R_WRITE) {
+      req.type = Request::Type::R_READ;
     }
 
     // Look it up in MSHR entries
-    assert(req.type == Request::Type::READ);
+    assert(req.type == Request::Type::R_READ);
     auto mshr = hit_mshr(req.addr);
     if (mshr != mshr_entries.end()) {
       debug("hit mshr");
@@ -283,7 +283,7 @@ void Cache::evict(std::list<Line>* lines,
   } else {
     // LLC eviction
     if (dirty) {
-      Request write_req(addr, Request::Type::WRITE);
+      Request write_req(addr, Request::Type::R_WRITE);
       cachesys->wait_list.push_back(make_pair(
           cachesys->clk + invalidate_time + latency[int(level)],
           write_req));

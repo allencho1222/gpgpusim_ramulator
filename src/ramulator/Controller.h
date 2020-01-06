@@ -309,8 +309,8 @@ public:
     Queue& get_queue(Request::Type type)
     {
         switch (int(type)) {
-            case int(Request::Type::READ): return readq;
-            case int(Request::Type::WRITE): return writeq;
+            case int(Request::Type::R_READ): return readq;
+            case int(Request::Type::R_WRITE): return writeq;
             default: return otherq;
         }
     }
@@ -325,7 +325,7 @@ public:
         queue.q.push_back(req);
         // shortcut for read requests, if a write to same addr exists
         // necessary for coherence
-        if (req.type == Request::Type::READ && find_if(writeq.q.begin(), writeq.q.end(),
+        if (req.type == Request::Type::R_READ && find_if(writeq.q.begin(), writeq.q.end(),
                 [req](Request& wreq){ return req.addr == wreq.addr;}) != writeq.q.end()){
             req.depart = clk + 1;
             pending.push_back(req);
@@ -399,11 +399,11 @@ public:
         if (req->is_first_command) {
             req->is_first_command = false;
             int coreid = req->coreid;
-            if (req->type == Request::Type::READ || req->type == Request::Type::WRITE) {
+            if (req->type == Request::Type::R_READ || req->type == Request::Type::R_WRITE) {
               channel->update_serving_requests(req->addr_vec.data(), 1, clk);
             }
             int tx = (channel->spec->prefetch_size * channel->spec->channel_width / 8);
-            if (req->type == Request::Type::READ) {
+            if (req->type == Request::Type::R_READ) {
                 if (is_row_hit(req)) {
                     ++read_row_hits[coreid];
                     ++row_hits;
@@ -415,7 +415,7 @@ public:
                     ++row_misses;
                 }
               read_transaction_bytes += tx;
-            } else if (req->type == Request::Type::WRITE) {
+            } else if (req->type == Request::Type::R_WRITE) {
               if (is_row_hit(req)) {
                   ++write_row_hits[coreid];
                   ++row_hits;
@@ -447,12 +447,12 @@ public:
         }
 
         // set a future completion time for read requests
-        if (req->type == Request::Type::READ) {
+        if (req->type == Request::Type::R_READ) {
             req->depart = clk + channel->spec->read_latency;
             pending.push_back(*req);
         }
 
-        if (req->type == Request::Type::WRITE) {
+        if (req->type == Request::Type::R_WRITE) {
             channel->update_serving_requests(req->addr_vec.data(), -1, clk);
             req->callback(*req);
         }

@@ -761,7 +761,10 @@ gpgpu_sim::gpgpu_sim( const gpgpu_sim_config &config )
         m_memory_partition_unit[i] = 
           new memory_partition_unit(i, m_memory_config, m_memory_stats,
                                     config.gpgpu_ramulator_config, 
-                                    config.gpgpu_ramulator_cache_line_size);
+                                    config.m_shader_config.n_simt_clusters * 
+                                    config.m_shader_config.n_simt_cores_per_cluster,
+                                    config.gpgpu_ramulator_cache_line_size
+                                    );
         for (unsigned p = 0; p < m_memory_config->m_n_sub_partition_per_memory_channel; p++) {
             unsigned submpid = i * m_memory_config->m_n_sub_partition_per_memory_channel + p; 
             m_memory_sub_partition[submpid] = m_memory_partition_unit[i]->get_sub_partition(p); 

@@ -106,11 +106,11 @@ void Controller<TLDRAM>::tick(){
     if (req->is_first_command) {
         int coreid = req->coreid;
         req->is_first_command = false;
-        if (req->type == Request::Type::READ || req->type == Request::Type::WRITE) {
+        if (req->type == Request::Type::R_READ || req->type == Request::Type::R_WRITE) {
           channel->update_serving_requests(req->addr_vec.data(), 1, clk);
         }
         int tx = (channel->spec->prefetch_size * channel->spec->channel_width / 8);
-        if (req->type == Request::Type::READ) {
+        if (req->type == Request::Type::R_READ) {
             if (is_row_hit(req)) {
                 ++read_row_hits[coreid];
                 ++row_hits;
@@ -122,7 +122,7 @@ void Controller<TLDRAM>::tick(){
                 ++row_misses;
             }
           read_transaction_bytes += tx;
-        } else if (req->type == Request::Type::WRITE) {
+        } else if (req->type == Request::Type::R_WRITE) {
           if (is_row_hit(req)) {
               ++write_row_hits[coreid];
               ++row_hits;
@@ -138,7 +138,7 @@ void Controller<TLDRAM>::tick(){
     }
 
     /*** 5. Change a read request to a migration request ***/
-    if (req->type == Request::Type::READ) {
+    if (req->type == Request::Type::R_READ) {
         req->type = Request::Type::EXTENSION;
     }
 
@@ -151,11 +151,11 @@ void Controller<TLDRAM>::tick(){
         return;
 
     // set a future completion time for read requests
-    if (req->type == Request::Type::READ || req->type == Request::Type::EXTENSION) {
+    if (req->type == Request::Type::R_READ || req->type == Request::Type::EXTENSION) {
         req->depart = clk + channel->spec->read_latency;
         pending.push_back(*req);
     }
-    if (req->type == Request::Type::WRITE) {
+    if (req->type == Request::Type::R_WRITE) {
         channel->update_serving_requests(req->addr_vec.data(), -1, clk);
     }
 

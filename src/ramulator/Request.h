@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include "../gpgpu-sim/mem_fetch.h"
 
 using namespace std;
 
@@ -12,6 +13,7 @@ namespace ramulator
 class Request
 {
 public:
+    mem_fetch* mf;
     bool is_first_command;
     long addr;
     // long addr_row;
@@ -21,8 +23,8 @@ public:
 
     enum class Type
     {
-        READ,
-        WRITE,
+        R_READ,
+        R_WRITE,
         REFRESH,
         POWERDOWN,
         SELFREFRESH,

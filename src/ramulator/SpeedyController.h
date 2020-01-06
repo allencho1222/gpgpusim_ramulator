@@ -108,14 +108,14 @@ public:
     bool enqueue(Request& req)
     {
         request_queue& q =
-            req.type == Request::Type::READ? readq:
-            req.type == Request::Type::WRITE? writeq:
+            req.type == Request::Type::R_READ? readq:
+            req.type == Request::Type::R_WRITE? writeq:
                                              otherq;
         if (queue_capacity == q.size())
             return false;
 
         req.arrive = clk;
-        if (req.type == Request::Type::READ){
+        if (req.type == Request::Type::R_READ){
             for (auto& info : writeq)
                 if (req.addr == get<0>(info).addr){
                     req.depart = clk + 1;
@@ -194,8 +194,8 @@ private:
     {
         typename T::Command cmd = channel->spec->translate[int(req.type)];
         switch (int(req.type)){
-            case int(Request::Type::READ):
-            case int(Request::Type::WRITE):{
+            case int(Request::Type::R_READ):
+            case int(Request::Type::R_WRITE):{
                 auto node = channel;
                 for (int i = 1; i < int(T::Level::Row); i++)
                     node = node->children[req.addr_vec[i]];
@@ -237,7 +237,7 @@ private:
 
         if (req.is_first_command) {
             req.is_first_command = false;
-            if (req.type == Request::Type::READ || req.type == Request::Type::WRITE) {
+            if (req.type == Request::Type::R_READ || req.type == Request::Type::R_WRITE) {
                 if (is_row_hit(req))
                     ++row_hits;
                 else
@@ -248,7 +248,7 @@ private:
         issue_cmd(first_cmd, req.addr_vec.data());
 
         if (first_cmd == channel->spec->translate[int(req.type)]){
-            if (req.type == Request::Type::READ) {
+            if (req.type == Request::Type::R_READ) {
                 req.depart = clk + channel->spec->read_latency;
                 pending.push(req);
             }
