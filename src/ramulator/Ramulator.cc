@@ -64,8 +64,8 @@ Ramulator::Ramulator(unsigned partition_id,
   returnq = 
     new fifo_pipeline<mem_fetch>("ramulatorreturnq", 0, 
                                  config->gpgpu_dram_return_queue_size == 0 ?
-                                 //1024 : config->gpgpu_dram_return_queue_size);
-                                 1024 : 2048);
+                                 1024 : config->gpgpu_dram_return_queue_size);
+                                 //1024 : 2048);
   finishedq =
     new fifo_pipeline<mem_fetch>("finishedq", config->CL, config->CL + 1);
   // checked constructor successfully constructed
@@ -156,11 +156,13 @@ void Ramulator::readComplete(Request& req) {
     reads.erase(req.mf->get_addr());
 
   mf->set_status(IN_PARTITION_MC_RETURNQ, gpu_sim_cycle + gpu_tot_sim_cycle);
+  mf->set_reply();
+  returnq->push(mf);
 
-  finishedq->push(mf);
+  //finishedq->push(mf);
 }
+
 void Ramulator::writeComplete(Request& req) {
-  std::cout << "hi" << std::endl;
   auto& write_mf_list = writes.find(req.mf->get_addr())->second;
   mem_fetch* mf = write_mf_list.front();
   write_mf_list.pop_front();
@@ -173,8 +175,8 @@ void Ramulator::writeComplete(Request& req) {
     mf->set_reply();
     returnq->push(mf);
   } else {
-    m_memory_partition_unit->set_done(finished_mf);
-    delete finished_mf;
+    m_memory_partition_unit->set_done(mf);
+    delete mf;
   }
 
 
