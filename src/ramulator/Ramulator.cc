@@ -165,6 +165,9 @@ void Ramulator::readComplete(Request& req) {
 void Ramulator::writeComplete(Request& req) {
   auto& write_mf_list = writes.find(req.mf->get_addr())->second;
   mem_fetch* mf = write_mf_list.front();
+  if (mf->get_access_type() == L2_WRBK_ACC || mf->get_access_type() == L1_WRBK_ACC) {
+    std::cout << "write back" << std::endl;
+  }
   write_mf_list.pop_front();
 
   if (!write_mf_list.size())

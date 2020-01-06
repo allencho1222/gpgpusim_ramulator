@@ -279,7 +279,7 @@ void memory_partition_unit::dram_cycle()
         ( (gpu_sim_cycle+gpu_tot_sim_cycle) >= m_dram_latency_queue.front().ready_cycle ) ) {
     	mem_fetch* mf = m_dram_latency_queue.front().req;
       if (mf) {
-        if (m_dram_r->full(mf->is_write(), (unsigned long)mf->get_addr())) {
+        if (!m_dram_r->full(mf->is_write(), (unsigned long)mf->get_addr())) {
           m_dram_latency_queue.pop_front();
           m_dram->push(mf);
         }
