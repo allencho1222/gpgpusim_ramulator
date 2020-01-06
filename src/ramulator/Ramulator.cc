@@ -188,6 +188,6 @@ void Ramulator::writeComplete(Request& req) {
 }
 
 void Ramulator::finish(void) {
-  Stats_ramulator::statlist.printall();
   memory->finish();
+  Stats_ramulator::statlist.printall();
 }

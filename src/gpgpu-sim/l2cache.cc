@@ -311,6 +311,10 @@ void memory_partition_unit::set_dram_power_stats(unsigned &n_cmd,
     m_dram->set_dram_power_stats(n_cmd, n_activity, n_nop, n_act, n_pre, n_rd, n_wr, n_req);
 }
 
+void memory_partition_unit::print_stat(FILE *fp) {
+  m_dram_r->finish();
+}
+
 void memory_partition_unit::print( FILE *fp ) const
 {
     fprintf(fp, "Memory Partition %u: \n", m_id); 
@@ -327,7 +331,8 @@ void memory_partition_unit::print( FILE *fp ) const
         else 
             fprintf(fp, " <NULL mem_fetch?>\n"); 
     }
-    m_dram->print(fp); 
+    //m_dram->print(fp); 
+    m_dram_r->finish();
 }
 
 memory_sub_partition::memory_sub_partition( unsigned sub_partition_id, 
